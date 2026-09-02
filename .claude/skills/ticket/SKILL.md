@@ -129,5 +129,4 @@ automatically on close, not only when asked.
   an edit to `## Notes` when the scope sharpens. The issue is the only durable record now; there is
   no file in the repo to edit instead.
 - `gh` needs auth. Inside the devcontainer that means `gh auth login` once (or a `GH_TOKEN` in the
-  environment) — without it every verb here fails, and the SessionStart hook silently surfaces
-  nothing.
+  environment) — without it every verb here fails.

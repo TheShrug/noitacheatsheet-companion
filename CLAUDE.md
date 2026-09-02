@@ -191,8 +191,7 @@ companion upload endpoint, anything about moderation, transcoding or the wand sc
 `NoitaSpellCasters`, even when this app is the only thing that needs it. The epic for the whole
 feature is [NoitaSpellCasters#66](https://github.com/TheShrug/NoitaSpellCasters/issues/66).
 
-The SessionStart hook (`.claude/hooks/session-start-tickets.js`) seeds each session's task list from
-the open issues, so it needs an authenticated `gh`; without one it silently surfaces nothing.
+The `/ticket` skill needs an authenticated `gh`; without one every verb it offers fails.
 
 ## Branches and pull requests
 

@@ -21,7 +21,7 @@
   },
 
   // gh backs the /ticket skill, and the queue is this repo's GitHub Issues.
-  // Without it the SessionStart hook silently surfaces nothing.
+  // Without it every verb that skill offers fails.
   "mounts": [
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.config/gh,target=/root/.config/gh,type=bind,consistency=cached"
   ],

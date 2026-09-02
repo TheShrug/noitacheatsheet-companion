@@ -1,18 +1,6 @@
 {
   "autoMemoryEnabled": false,
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/session-start-tickets.js",
-            "shell": "bash",
-            "statusMessage": "Loading unfinished tickets"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Read|Write|Edit",
