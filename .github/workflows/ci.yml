@@ -29,13 +29,18 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The Go version lives in go.mod and nowhere else, so bumping it is one
       # edit rather than one edit plus however many workflows exist.
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          # There are no dependencies, so there is no go.sum and nothing to
+          # cache. Left on, setup-go warns about the missing file on every
+          # single run — and a warning that is always there is one nobody
+          # reads when it finally means something.
+          cache: false
 
       - name: gofmt
         if: runner.os == 'Linux'
@@ -64,10 +69,15 @@ jobs:
     name: cross-compile
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+          # There are no dependencies, so there is no go.sum and nothing to
+          # cache. Left on, setup-go warns about the missing file on every
+          # single run — and a warning that is always there is one nobody
+          # reads when it finally means something.
+          cache: false
 
       - name: build every target
         run: |
