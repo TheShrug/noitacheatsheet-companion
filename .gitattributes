@@ -1,0 +1,10 @@
+# LF everywhere, in the repo and in the working tree.
+#
+# Not cosmetic: the Makefile and Dockerfile are executed inside a Linux
+# container, and CRLF in a make recipe or a RUN line fails there with an error
+# that names neither the file nor the line endings.
+* text=auto eol=lf
+
+*.png binary
+*.gif binary
+*.ico binary

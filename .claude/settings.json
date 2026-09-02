@@ -1,0 +1,30 @@
+{
+  "autoMemoryEnabled": false,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-start-tickets.js",
+            "shell": "bash",
+            "statusMessage": "Loading unfinished tickets"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/no-auto-memory.js",
+            "shell": "bash",
+            "statusMessage": "Checking memory-store access"
+          }
+        ]
+      }
+    ]
+  }
+}

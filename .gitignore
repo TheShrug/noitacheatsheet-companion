@@ -1,0 +1,17 @@
+# Build output. `make build` writes here.
+/dist/
+
+# Go
+*.exe
+*.test
+*.out
+
+# Anything a player's machine would hand us during a manual test. These are
+# real save files and real clips — never commit one that wasn't deliberately
+# reduced to a fixture.
+/scratch/
+
+# Editors
+.idea/
+.vscode/
+*~

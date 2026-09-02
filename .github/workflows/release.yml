@@ -1,0 +1,69 @@
+# Build the binaries a player downloads, and publish them against a tag.
+#
+# The build runs in the repo's own Dockerfile rather than on the runner, so the
+# thing that produced a release is a committed, versioned file and not whatever
+# the GitHub image happened to ship that month. `make dist` on a laptop runs the
+# identical stage.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to stamp into the binary (a dry run publishes nothing)"
+        required: false
+        default: dev
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: version
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        if: startsWith(github.ref, 'refs/tags/v')
+
+      - name: build
+        run: |
+          docker build \
+            --target dist \
+            --build-arg VERSION="${{ steps.version.outputs.value || inputs.version || 'dev' }}" \
+            --output dist .
+          ls -l dist
+
+      # A checksum is the only thing a player has to tell a real download from a
+      # tampered one, since these binaries are unsigned. It is worth nothing if
+      # it is not published beside them.
+      - name: checksums
+        working-directory: dist
+        run: sha256sum * | tee SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: companion-binaries
+          path: dist/
+
+      - name: publish
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file - <<'NOTES'
+          These binaries are **unsigned**. Windows SmartScreen will warn about them,
+          and that warning is correct: it means nobody has paid for a code-signing
+          certificate, not that the file has been checked and cleared.
+
+          Verify your download against `SHA256SUMS` before running it, and see the
+          repository README for what the app sends and what it never sends.
+          NOTES

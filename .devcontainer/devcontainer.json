@@ -1,0 +1,40 @@
+{
+  "name": "noitacheatsheet-companion",
+
+  // The `dev` stage of the repo's own Dockerfile, not a stock image. It shares
+  // a `base` stage with the release build, so the compiler that runs the tests
+  // is the compiler that ships the binary.
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "target": "dev",
+    "context": ".."
+  },
+
+  "workspaceFolder": "/src",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/src,type=bind",
+
+  // The local review queue, once it exists. Bound to 127.0.0.1 on a player's
+  // machine; forwarded here so it can be opened from the host browser.
+  "forwardPorts": [7331],
+  "portsAttributes": {
+    "7331": { "label": "review queue" }
+  },
+
+  // gh backs the /ticket skill, and the queue is this repo's GitHub Issues.
+  // Without it the SessionStart hook silently surfaces nothing.
+  "mounts": [
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.config/gh,target=/root/.config/gh,type=bind,consistency=cached"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go"],
+      "settings": {
+        "go.toolsManagement.autoUpdate": false,
+        "editor.formatOnSave": true
+      }
+    }
+  },
+
+  "postCreateCommand": "go mod download && make test"
+}
