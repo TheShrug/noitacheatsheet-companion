@@ -144,6 +144,9 @@ machines until they update.
 ```
 cmd/companion/      the CLI entry point
 internal/noita/     finding Noita's folders, and reading what's in them
+internal/watch/     spotting a new clip, and only once it is finished being written
+internal/queue/     the local list of clips waiting for review, and its file
+internal/server/    the review queue on 127.0.0.1 — the consent step
 ```
 
 `internal/` deliberately: nothing here is a public API, and keeping it uni-importable means we can

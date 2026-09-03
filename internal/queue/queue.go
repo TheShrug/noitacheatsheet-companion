@@ -5,6 +5,8 @@
 package queue
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"os"
 	"sync"
@@ -51,6 +53,27 @@ type Entry struct {
 	// not read again at review time. A wand discarded since stays correct,
 	// and the clip stays reviewable after a new run starts.
 	Wands []Wand `json:"wands"`
+
+	// ApprovedAt is when the player confirmed this clip in the review queue,
+	// nil while it is still waiting. Approval is local and on its own does
+	// nothing: there is nowhere to send a clip yet (ADR 2), so this records
+	// the consent and only that.
+	ApprovedAt *time.Time `json:"approved_at,omitempty"`
+}
+
+// ID is a stable, opaque handle for an entry, used by the review queue's
+// URLs. It is derived from the clip's path so that it survives a restart and
+// a Prune; a position in Entries() would not, and a page rendered before a
+// prune would then confirm the clip that took the missing one's place.
+//
+// It is not a path and does not turn back into one: the server looks an
+// entry up by ID and serves the path it finds there, so nothing a request
+// says ever reaches the filesystem. See SECURITY.md.
+func (e Entry) ID() string {
+	sum := sha256.Sum256([]byte(e.Path))
+	// Half the digest. This names one of a handful of files on one machine,
+	// so the full 64 characters buy nothing but an uglier URL.
+	return hex.EncodeToString(sum[:])[:16]
 }
 
 // Queue is an in-memory list of Entry, safe for concurrent use. It is
@@ -130,4 +153,43 @@ func (q *Queue) Runs() []Run {
 		runs[i] = Run{Key: k, Entries: byKey[k]}
 	}
 	return runs
+}
+
+// Find returns the entry with the given ID. A miss is normal rather than
+// exceptional: a page held open while the clip was deleted and pruned asks
+// for an ID that is no longer here.
+func (q *Queue) Find(id string) (Entry, bool) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	for _, e := range q.entries {
+		if e.ID() == id {
+			return e, true
+		}
+	}
+	return Entry{}, false
+}
+
+// Approve records that the player confirmed the entry with the given ID at
+// the given time, and reports whether that entry is in the queue. An entry
+// already approved keeps its original time — the first confirmation is the
+// one that was consent; a second click is not a new decision.
+//
+// This marks and nothing more. Approving does not upload, delete, move or
+// touch the clip in any way; see docs/PHILOSOPHY.md principle 2.
+func (q *Queue) Approve(id string, at time.Time) bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	for i, e := range q.entries {
+		if e.ID() != id {
+			continue
+		}
+		if q.entries[i].ApprovedAt == nil {
+			t := at
+			q.entries[i].ApprovedAt = &t
+		}
+		return true
+	}
+	return false
 }
