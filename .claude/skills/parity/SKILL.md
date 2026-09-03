@@ -19,7 +19,7 @@ which nobody notices until someone tries to build it.
 | Here | There, in `TheShrug/NoitaSpellCasters` |
 | --- | --- |
 | `internal/noita/paths.go` | `NoitaCheatSheet/Shared/NoitaSavePaths.cs` |
-| the wand parse (when it lands) | `NoitaCheatSheet/Client/Services/WandService.cs`, `ParseSaveFile` |
+| `internal/noita/wand.go` | `NoitaCheatSheet/Client/Services/WandService.cs`, `ParseSaveFile` |
 | the upload request the app sends | the companion endpoint on `NoitaCheatSheet/Server/Controllers/WandsController.cs` |
 
 Keep this table current. A ported thing missing from it is a ported thing nobody will check.
