@@ -204,11 +204,11 @@ The `/ticket` skill needs an authenticated `gh`; without one every verb it offer
 Name that branch:
 
 ```
-TheShrug/<issue>-<type>-<slug>
+<issue>-<type>-<slug>
 ```
 
 ```
-^TheShrug/[0-9]+-(tckt|feat|bug|chore|spike)-[a-z0-9]+(-[a-z0-9]+)*$
+^[0-9]+-(tckt|feat|bug|chore|spike)-[a-z0-9]+(-[a-z0-9]+)*$
 ```
 
 - `<issue>` is the **issue number in this repo** — not a PR number. A PR number doesn't exist yet
@@ -218,7 +218,14 @@ TheShrug/<issue>-<type>-<slug>
   holds the full title, so this is a handle, not a summary.
 
 So issue #4 `type: tckt` "Watch the gif folder for completed writes" becomes
-`TheShrug/4-tckt-watch-gif-folder`.
+`4-tckt-watch-gif-folder`.
+
+**No owner prefix.** The name used to start `TheShrug/`. It was dropped 2026-09-03: in a
+single-maintainer fleet every branch carried it, so it distinguished nothing, and Orca's own
+`branchPrefix` setting prepends the git username silently — two layers adding a prefix at once,
+which is how `TheShrug/TheShrug-79-...` got created. Orca is set to `None` now, so `--name` is
+the whole branch name. Existing `TheShrug/...` branches are grandfathered by the same date rule
+below.
 
 **No issue, no branch** — the number is mandatory, so every branch traces back to the queue. Still
 reference the issue number in the PR title.
