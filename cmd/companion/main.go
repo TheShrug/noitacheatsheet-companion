@@ -1,11 +1,12 @@
 // Command companion is the noitacheatsheet.com desktop uploader.
 //
-// Today it does one thing: find Noita's data folder on this machine and report
-// what it found. That is the foundation everything else stands on — a watcher
-// pointed at the wrong folder fails silently — and it is the check to run first
-// when the app is not seeing your clips.
+// Two commands today. "paths" finds Noita's data folder on this machine and
+// reports what it found — the foundation everything else stands on, since a
+// watcher pointed at the wrong folder fails silently, and the check to run
+// first when the app is not seeing your clips. "serve" opens the review queue
+// on 127.0.0.1.
 //
-// The watcher, the review queue and the upload are not built yet. See the
+// The watcher is not wired into "serve" yet, and nothing uploads. See the
 // repository's open issues.
 package main
 
@@ -16,6 +17,8 @@ import (
 	"os"
 
 	"github.com/TheShrug/noitacheatsheet-companion/internal/noita"
+	"github.com/TheShrug/noitacheatsheet-companion/internal/queue"
+	"github.com/TheShrug/noitacheatsheet-companion/internal/server"
 )
 
 // version is stamped by the linker at release time; see the Makefile.
@@ -31,11 +34,14 @@ func main() {
 func run(args []string) error {
 	fs := flag.NewFlagSet("companion", flag.ContinueOnError)
 	root := fs.String("root", "", "Noita data folder to use instead of searching (the one containing save00 and save_rec)")
+	port := fs.Int("port", server.DefaultPort, "port for the review queue, which is served on 127.0.0.1 and never anywhere else")
 	showVersion := fs.Bool("version", false, "print the version and exit")
 
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), "companion — the noitacheatsheet.com desktop uploader\n\n")
-		fmt.Fprintf(fs.Output(), "Usage:\n  companion paths [--root DIR]   report where Noita's files are on this machine\n\n")
+		fmt.Fprintf(fs.Output(), "Usage:\n")
+		fmt.Fprintf(fs.Output(), "  companion paths [--root DIR]   report where Noita's files are on this machine\n")
+		fmt.Fprintf(fs.Output(), "  companion serve [--port N]     serve the review queue on 127.0.0.1\n\n")
 		fmt.Fprintf(fs.Output(), "Flags:\n")
 		fs.PrintDefaults()
 	}
@@ -57,6 +63,8 @@ func run(args []string) error {
 	switch command {
 	case "paths":
 		return printPaths(*root)
+	case "serve":
+		return serveQueue(*port)
 	case "":
 		fs.Usage()
 		return errors.New("\nno command given")
@@ -64,6 +72,44 @@ func run(args []string) error {
 		fs.Usage()
 		return fmt.Errorf("\nunknown command %q", command)
 	}
+}
+
+// serveQueue serves the review queue until the process is stopped.
+//
+// It reads the queue file and nothing else: the watcher that fills that file
+// is not wired in here yet (issue #11), so this shows whatever has been queued
+// and offers to confirm it. Confirming is local — there is nowhere to upload
+// to yet (ADR 2).
+func serveQueue(port int) error {
+	path, err := queue.ConfigPath()
+	if err != nil {
+		return err
+	}
+
+	q := queue.Load(path)
+	srv, err := server.New(q, path, port)
+	if err != nil {
+		return err
+	}
+
+	// Bind before printing anything, so a port already in use is an error
+	// rather than a URL that does not answer.
+	ln, err := srv.Listen()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Queue file  %s\n", path)
+	fmt.Printf("Clips       %d waiting for review\n", len(q.Entries()))
+	fmt.Println("The clip watcher is not wired into this command yet (issue #11), so")
+	fmt.Println("this serves what is already in the queue file.")
+	fmt.Println()
+
+	// The URL is the last line on startup: the fleet's contract, and what the
+	// tray's "Open queue" will open (ADR 3).
+	fmt.Println(srv.URL())
+
+	return srv.Serve(ln)
 }
 
 // printPaths reports the resolved install, or every place that was searched.

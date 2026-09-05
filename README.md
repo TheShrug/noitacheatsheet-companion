@@ -5,8 +5,9 @@ A small desktop app that watches Noita's own gif folder and your active save, an
 into a browser.
 
 > **Status: early. It cannot upload anything yet.**
-> One command works today — `companion paths`, which finds Noita's folders on your machine and tells
-> you what it found. The watcher, the review queue and the upload are open work; see
+> Two commands work today — `companion paths`, which finds Noita's folders on your machine and tells
+> you what it found, and `companion serve`, which opens the review queue. The watcher that fills
+> that queue, and the upload itself, are open work; see
 > [Issues](https://github.com/TheShrug/noitacheatsheet-companion/issues) and
 > [`docs/adr/`](docs/adr/README.md) for what is decided and what isn't.
 
@@ -75,6 +76,25 @@ alternating between two runs in the same minute.
 documentation rather than from a real install, so a mismatch is probably the list being wrong.
 Paste the output of `companion paths` into an issue with your distribution and how you installed
 Steam.
+
+## Reviewing your clips
+
+```
+companion serve
+```
+
+Serves the review queue and prints its address as the last line — `http://127.0.0.1:7331` unless you
+pass `--port`. Open that, and you get every queued clip grouped by the run it came from, with the
+wands that were on your save when it was recorded, and a button per clip.
+
+It listens on `127.0.0.1` and never on anything else, so nothing outside your machine can open it.
+[`SECURITY.md`](SECURITY.md) sets out what defends it from a web page you happen to have open, and
+what does not.
+
+**The button does not upload.** There is nowhere to upload to yet, so confirming a clip records that
+you were happy with it, in this app's own queue file, and sends nothing. The watcher that finds new
+clips is also not wired into this command yet, so today the queue holds whatever is already in that
+file.
 
 ## Build it yourself
 
