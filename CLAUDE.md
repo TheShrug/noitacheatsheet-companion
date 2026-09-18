@@ -20,6 +20,32 @@ Once a bug's cause is established, stop investigating and fix it. Demonstrate th
 then go to the edit — don't re-prove the same root cause with successive probes or gate the fix
 behind more confirmation queries.
 
+## Writing code here
+
+Write code you would be proud to share with a colleague: readable, elegant, efficient, and only as
+complex as it *needs to be*.
+
+- **Readable first.** Someone reads this next — a stranger on GitHub, or you at 2am with the thing
+  broken. Name things for what they are, keep a function small enough to hold in your head, and
+  comment the *why*, never the *what*.
+- **Only as complex as it needs to be.** Solve the problem in front of you, not the one you imagine
+  arriving next year. An abstraction earns its keep at the second caller; a config knob earns its
+  keep when something actually needs to be configured.
+- **Elegant means fewer moving parts, not clever ones.** If the plain version is marginally slower
+  at this scale, it is still the right version.
+- **Efficient where it counts.** Kill the query inside the loop; leave the code that runs once
+  alone. Measure before rewriting — a guess about what is slow is just a more expensive guess.
+- **Match the code that is already here.** Its naming, its idiom, its file layout. Fleet consistency
+  beats a local improvement only this file gets; if the existing shape is wrong, change it
+  deliberately and everywhere, not quietly and here.
+
+Fleet-wide, and restated in every app repo — the reasoning lives in the `homelab` vault at
+`Conventions/Code Quality.md`, which is private.
+
+That is the fleet floor. **This repo sets the bar higher** and says why — see
+[Readability is a functional requirement](#readability-is-a-functional-requirement) below, which
+is binding where it goes further.
+
 ## What this repo is, and the two rules that follow
 
 A background process that runs on **other people's computers**, reads their save files, and is
