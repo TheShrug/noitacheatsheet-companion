@@ -1,14 +1,17 @@
 #!/usr/bin/env node
-// PreToolUse hook (Read|Write|Edit): refuse to use Claude Code's auto-memory store.
+// PreToolUse hook (Read|Write|Edit): gate Claude Code's auto-memory store.
 //
-// Rationale: anything durable enough to be worth remembering across sessions is durable enough
-// to belong in the repo, where it's reviewable, diffable, and visible to every contributor —
-// not in a per-user directory under ~/.claude that only one machine can see. So reaching for
-// memory is treated as a signal that something is *undocumented*, and the fix is to write the
-// documentation rather than the memory.
+// Rationale: anything durable enough to be worth remembering *about this project* is durable enough
+// to belong in a repo, where it's reviewable, diffable, and visible to every contributor — not in a
+// per-user directory under ~/.claude that only one machine can see.
 //
-// This is a backstop. `autoMemoryEnabled: false` in settings.json already turns the feature off;
-// this catches any direct Read/Write/Edit against the memory tree and redirects to the right file.
+// The exception is memory about *the user* — how they like to work, how they prefer to interact,
+// communication style. That is genuinely per-person rather than per-repo, it doesn't belong in a
+// repo other contributors read, and it's the one thing the memory store is actually for.
+//
+// So this returns "ask" rather than "deny": every write to the memory tree stops and prompts, and
+// the reason below is the test to apply before answering. `autoMemoryEnabled` is left ON so that
+// path exists at all — this hook, not the setting, is what keeps it deliberate.
 
 let raw = "";
 process.stdin.on("data", (chunk) => (raw += chunk));
@@ -34,32 +37,44 @@ process.stdin.on("end", () => {
   if (!isMemoryPath) process.exit(0);
 
   const reason = [
-    "This project does not use Claude Code's auto-memory store. Wanting to write one is a signal —",
-    "work out which of these two it is before doing anything else:",
+    "Memory-store write. Decide which of these it is before answering — and ASK THE USER before",
+    "writing one either way. A memory is never created silently.",
     "",
-    "1. IT'S UNDOCUMENTED. Write the doc instead, in whichever fits narrowest:",
-    "     - CLAUDE.md              how to work in this repo; conventions, build/deploy facts",
-    "     - docs/adr/              a decision with real alternatives (see docs/adr/README.md)",
-    "     - a GitHub issue       work to do, or context specific to one ticket (`/ticket`)",
-    "     - docs/PHILOSOPHY.md     a durable design principle",
-    "     - .claude/skills/*/      a repeatable workflow to re-run by name",
-    "     - a README near the code it describes",
+    "ALLOWED — it's about THE USER, not the code:",
+    "  - how they like to work, and how they want work presented or paced",
+    "  - how they prefer to interact; communication and feedback style",
+    "  - standing preferences that would hold on any repo, not just this one",
+    "  Genuinely per-person, so a repo other people read is the wrong home for it. Confirm the",
+    "  wording with them, then write it.",
     "",
-    "2. IT'S A SYMPTOM. A fact you have to *remember* to work in this codebase is often an",
-    "   architectural problem or an inconsistency — a footgun you route around, two subsystems",
-    "   disagreeing, a convention honoured in some places and not others. Recording it just makes",
-    "   the defect survivable instead of fixed. Raise it with the user to discuss and triage:",
-    "   a type: bug / type: chore issue if it's real work, an ADR if the fix is a decision.",
+    "NOT ALLOWED — anything else. Work out which of these three it is:",
     "",
-    "Prefer (2) when it plausibly applies — \"remember that X is weird\" is nearly always a bug",
-    "report wearing a disguise. See CLAUDE.md, \"Documentation, not memory\".",
+    "1. IT'S ABOUT THE UPLOADER ITSELF — how it's built, how to run it locally, a convention in the",
+    "   Go source. Write it here:",
+    "     - README.md    what this is, how to build and run it",
+    "     - CLAUDE.md    conventions for working in this repo",
+    "     - docs/adr/    decisions. A \"decide X\" item produces a new ADR as its output",
+    "",
+    "2. IT'S AN OPERATIONAL FACT — hosting, DNS, ingress, the Coolify resource, where it deploys.",
+    "   That does not live in this repo. It lives in the homelab vault, in Projects/noitacheatsheet-companion.md",
+    "   (github.com/TheShrug/homelab). Put it there so it sits beside the server notes it",
+    "   depends on, and link rather than restating it here.",
+    "",
+    "3. IT'S WORK TO BE DONE. That's a GitHub issue on this repo, not a note anywhere. Use the",
+    "   Work item template; add the matching type: label.",
+    "",
+    "And consider that it may be a SYMPTOM: a fact you have to *remember* to work in a codebase",
+    "is often a defect rather than a quirk — a footgun you route around, a convention honoured in",
+    "some places and not others, code or processes going against common software development best",
+    "practices. Recording it just makes the defect survivable instead of fixed.",
+    "\"Remember that X is weird\" is nearly always a bug report wearing a disguise. Raise it.",
   ].join("\n");
 
   process.stdout.write(
     JSON.stringify({
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
-        permissionDecision: "deny",
+        permissionDecision: "ask",
         permissionDecisionReason: reason,
       },
     })
